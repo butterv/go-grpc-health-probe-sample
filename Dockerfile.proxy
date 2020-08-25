@@ -1,0 +1,23 @@
+# image for build
+FROM golang:1.14.4-alpine as builder
+
+ENV GOPATH=/go \
+    GO111MODULE=on \
+    PROJECT_ROOT=/go/src/github.com/istsh/go-grpc-health-probe-sample
+
+WORKDIR $PROJECT_ROOT
+
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a ./app/cmd/reverse-proxy
+
+# image for release
+FROM gcr.io/distroless/base:latest
+ENV BUILDER_ROOT /go/src/github.com/istsh/go-grpc-health-probe-sample
+ENV PROJECT_ROOT /
+COPY --from=builder $BUILDER_ROOT/reverse-proxy $PROJECT_ROOT/reverse-proxy
+CMD ["/reverse-proxy", "--grpc-server-endpoint=grpc-server:9090"]
