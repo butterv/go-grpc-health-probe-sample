@@ -8,6 +8,7 @@ require (
 	github.com/gorilla/handlers v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.7
+	github.com/grpc-ecosystem/grpc-health-probe v0.3.2 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect

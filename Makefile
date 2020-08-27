@@ -17,3 +17,17 @@ generate-pb:
 			--validate_out="lang=go:$(GOPATH)/src" \
 			--grpc-gateway_out=logtostderr=true:$(GOPATH)/src; \
 	done
+
+docker-build:
+	docker build -f ./Dockerfile.proxy -t istsh/go-grpc-health-probe-proxy-sample ./
+	docker build -f ./Dockerfile.server -t istsh/go-grpc-health-probe-server-sample ./
+
+docker-push:
+	docker push istsh/go-grpc-health-probe-server-sample:latest
+	docker push istsh/go-grpc-health-probe-proxy-sample:latest
+
+run:
+	kubectl apply -k k8s/local/
+
+stop:
+	kubectl delete -k k8s/local/

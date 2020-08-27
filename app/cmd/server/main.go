@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	listenPort, err := net.Listen("tcp", ":9090")
+	listenPort, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		logrus.Fatalln(err)
 	}
