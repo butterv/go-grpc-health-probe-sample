@@ -19,7 +19,7 @@ spec:
             name: envoy-grpc-server-config
       containers:
         - name: grpc-server
-          image: istsh/go-grpc-health-probe-server-sample:1.7.0
+          image: istsh/go-grpc-health-probe-server-sample:1.8.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
