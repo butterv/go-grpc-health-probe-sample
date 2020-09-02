@@ -1,7 +1,0 @@
-resources:
-  - grpc-gateway/configmap.yaml
-  - grpc-gateway/deployment.yaml
-  - grpc-gateway/service.yaml
-  - grpc-server/configmap.yaml
-  - grpc-server/deployment.yaml
-  - grpc-server/service.yaml
