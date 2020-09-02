@@ -18,7 +18,7 @@ spec:
             name: envoy-grpc-gateway-config
       containers:
         - name: grpc-gateway
-          image: istsh/go-grpc-health-probe-proxy-sample:latest
+          image: istsh/go-grpc-health-probe-proxy-sample:1.0.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
