@@ -68,16 +68,17 @@ data:
                 address: 127.0.0.1
                 port_value: 8080
         - name: grpc_server
-          http2_protocol_options: {}
           connect_timeout: 0.5s
           type: STRICT_DNS
-          lb_policy: round_robin
+          lb_policy: ROUND_ROBIN
+          drain_connections_on_host_removal: true
+          http2_protocol_options: {}
           health_checks:
             - timeout: 5s
               interval: 10s
               unhealthy_threshold: 2
               healthy_threshold: 2
-              tcp_health_check: {}
+              grpc_health_check: {}
           load_assignment:
             cluster_name: grpc_server
             endpoints:

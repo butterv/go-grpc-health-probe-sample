@@ -1,9 +1,10 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: grpc-server
 spec:
   replicas: 4
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       app: grpc-server
@@ -31,6 +32,10 @@ spec:
             exec:
               command: [ "/bin/grpc_health_probe", "-addr=:8080" ]
             initialDelaySeconds: 1
+#          lifecycle:
+#            preStop:
+#              exec:
+#                command: ["sleep", "30"]
         - name: envoy-proxy
           image: envoyproxy/envoy:v1.14-latest
           imagePullPolicy: Always
@@ -46,4 +51,17 @@ spec:
           volumeMounts:
             - name: envoy
               mountPath: /etc/envoy
-  revisionHistoryLimit: 3
+  strategy:
+    blueGreen:
+      # 本番アクセス用のServiceの名前
+      activeService: local-grpc-server
+      # Previewアクセス用のServiceの名前
+      previewService: local-grpc-server-preview
+      # 手動昇格の有無
+      autoPromotionEnabled: false
+      # オプション Preview環境限定でreplicasの上書き
+      previewReplicaCount: 1
+      # オプション ReplicaSetが準備完了になってから自動昇格するまでの時間
+      autoPromotionSeconds: 60
+      # オプション 新Verにルーティングを切り替えた後に旧VerのPodのスケールダウンを開始させるまでの時間
+      scaleDownDelaySeconds: 60
