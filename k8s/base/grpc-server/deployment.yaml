@@ -32,10 +32,6 @@ spec:
             exec:
               command: [ "/bin/grpc_health_probe", "-addr=:8080" ]
             initialDelaySeconds: 1
-#          lifecycle:
-#            preStop:
-#              exec:
-#                command: ["sleep", "30"]
         - name: envoy-proxy
           image: envoyproxy/envoy:v1.14-latest
           imagePullPolicy: Always
@@ -58,10 +54,10 @@ spec:
       # Previewアクセス用のServiceの名前
       previewService: grpc-server-preview
       # 手動昇格の有無
-      autoPromotionEnabled: false
+      # autoPromotionEnabled: false
       # オプション Preview環境限定でreplicasの上書き
-      previewReplicaCount: 1
+      # previewReplicaCount: 1
       # オプション ReplicaSetが準備完了になってから自動昇格するまでの時間
-      autoPromotionSeconds: 60
+      # autoPromotionSeconds: 60
       # オプション 新Verにルーティングを切り替えた後に旧VerのPodのスケールダウンを開始させるまでの時間
       scaleDownDelaySeconds: 60
