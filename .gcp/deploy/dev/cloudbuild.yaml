@@ -12,6 +12,7 @@ steps:
       - --cache-ttl=6h
       - --dockerfile=Dockerfile.proxy
       - --build-arg=PROJECT_ID=${PROJECT_ID}
+    waitFor: ['make test']
   - id: build and push grpc-server image
     name: gcr.io/kaniko-project/executor:latest
     args:
@@ -20,3 +21,4 @@ steps:
       - --cache-ttl=6h
       - --dockerfile=Dockerfile.server
       - --build-arg=PROJECT_ID=${PROJECT_ID}
+    waitFor: ['make test']
