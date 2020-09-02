@@ -58,6 +58,6 @@ spec:
       # オプション Preview環境限定でreplicasの上書き
       # previewReplicaCount: 1
       # オプション ReplicaSetが準備完了になってから自動昇格するまでの時間
-      autoPromotionSeconds: 60
+      autoPromotionSeconds: 15
       # オプション 新Verにルーティングを切り替えた後に旧VerのPodのスケールダウンを開始させるまでの時間
-      scaleDownDelaySeconds: 60
+      scaleDownDelaySeconds: 30
