@@ -1,0 +1,14 @@
+timeout: 780s
+steps:
+  - id: build and push grpc-gateway image
+    name: gcr.io/kaniko-project/executor:v0.20.0
+    args:
+      - --destination=gcr.io/$PROJECT_ID/grpc-gateway:${COMMIT_SHA}
+      - --dockerfile=Dockerfile.proxy
+      - --build-arg=PROJECT_ID=${PROJECT_ID}
+  - id: build and push grpc-server image
+    name: gcr.io/kaniko-project/executor:v0.20.0
+    args:
+      - --destination=gcr.io/$PROJECT_ID/grpc-server:${COMMIT_SHA}
+      - --dockerfile=Dockerfile.server
+      - --build-arg=PROJECT_ID=${PROJECT_ID}
