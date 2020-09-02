@@ -54,7 +54,7 @@ spec:
       # Previewアクセス用のServiceの名前
       previewService: grpc-server-preview
       # 手動昇格の有無
-      # autoPromotionEnabled: false
+      autoPromotionEnabled: false
       # オプション Preview環境限定でreplicasの上書き
       # previewReplicaCount: 1
       # オプション ReplicaSetが準備完了になってから自動昇格するまでの時間
