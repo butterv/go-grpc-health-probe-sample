@@ -1,0 +1,25 @@
+linters:
+  # `golint` is disabled by default, so enable it explicitly.
+  enable:
+    - golint
+
+issues:
+  # Ignore errors that include `.Close` in messages detected by `errcheck` of linter.
+  # Because the following errors are detected in many codes.
+  # `Error return value of XXX is not checked`
+  exclude-rules:
+    - linters:
+        - errcheck
+      text: ".Close"
+    - linters:
+        - staticcheck
+      text: "deprecated:"
+    - linters:
+        - deadcode
+        - unused
+      text: "is unused"
+  # When run with `golangci-lint` command, some errors are ignored.
+  # The list can be confirmed by executing the following command.
+  # (--exclude-use-default option)
+  # To not ignore them, it needs to set `--exclude-use-default=false`.
+  exclude-use-default: false
