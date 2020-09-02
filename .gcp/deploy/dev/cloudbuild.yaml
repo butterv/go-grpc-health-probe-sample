@@ -1,5 +1,13 @@
 timeout: 780s
 steps:
+  - id: mak lint
+    name: golang:1.15.1-alpine
+    dir: .
+    args: [ 'make', 'lint' ]
+  - id: make test
+    name: golang:1.15.1-alpine
+    dir: .
+    args: [ 'make', 'test' ]
   - id: build and push grpc-gateway image
     name: gcr.io/kaniko-project/executor:latest
     args:

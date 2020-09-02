@@ -10,7 +10,7 @@ type healthService struct {
 }
 
 // NewHealthService generates the `HealthServer` implementation.
-func NewHealthService() *healthService {
+func NewHealthService() healthpb.HealthServer {
 	return &healthService{}
 }
 
