@@ -1,9 +1,5 @@
 timeout: 780s
 steps:
-  - id: make lint
-    name: golang:1.15.1
-    dir: .
-    args: [ 'make', 'lint' ]
   - id: make test
     name: golang:1.15.1
     dir: .
