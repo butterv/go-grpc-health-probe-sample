@@ -1,6 +1,6 @@
 timeout: 780s
 steps:
-  - id: mak lint
+  - id: make lint
     name: golang:1.15.1-alpine
     dir: .
     args: [ 'make', 'lint' ]
