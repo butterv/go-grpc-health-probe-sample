@@ -53,11 +53,11 @@ spec:
       activeService: grpc-server
       # Previewアクセス用のServiceの名前
       previewService: grpc-server-preview
-      # 手動昇格の有無
-      autoPromotionEnabled: false
+      # 自動昇格の有無
+      autoPromotionEnabled: treu
       # オプション Preview環境限定でreplicasの上書き
       # previewReplicaCount: 1
       # オプション ReplicaSetが準備完了になってから自動昇格するまでの時間
-      # autoPromotionSeconds: 60
+      autoPromotionSeconds: 60
       # オプション 新Verにルーティングを切り替えた後に旧VerのPodのスケールダウンを開始させるまでの時間
       scaleDownDelaySeconds: 60
