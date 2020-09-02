@@ -54,9 +54,9 @@ spec:
   strategy:
     blueGreen:
       # 本番アクセス用のServiceの名前
-      activeService: local-grpc-server
+      activeService: grpc-server
       # Previewアクセス用のServiceの名前
-      previewService: local-grpc-server-preview
+      previewService: grpc-server-preview
       # 手動昇格の有無
       autoPromotionEnabled: false
       # オプション Preview環境限定でreplicasの上書き

@@ -86,7 +86,7 @@ data:
                 - endpoint:
                     address:
                       socket_address:
-                        address: local-grpc-server
+                        address: grpc-server
                         port_value: 10000
     admin:
       access_log_path: /tmp/admin_access.log
