@@ -81,7 +81,7 @@ steps:
         set -x && \
         cd go-grpc-health-probe-sample-manifests && \
         git config user.email $(gcloud auth list --filter=status:ACTIVE --format='value(account)') && \
-        git switch candidate-dev
+        git fetch origin candidate-dev && git switch candidate-dev && \
         git add kubernetes.yaml && \
         git commit -m "Deploying images
         - gcr.io/${PROJECT_ID}/grpc-gateway:${SHORT_SHA}
