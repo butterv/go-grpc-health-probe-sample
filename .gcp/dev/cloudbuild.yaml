@@ -82,8 +82,11 @@ steps:
         set -x && \
         git config --global user.email $(git log --format='%an <%ae>' -n 1 HEAD | sed 's/.*\<\([^>]*\)\>.*/\1/g') && \
         git fetch origin candidate-dev && git switch candidate-dev && \
+        git fetch origin master && git merge origin/master && \
         git add kubernetes.yaml && \
-        git commit -m "Deploying images
+        git commit \
+        --author="Cloud Build Service Account <$(gcloud auth list --filter=status:ACTIVE --format='value(account)')>" \
+        -m "Deploying images
         - gcr.io/${PROJECT_ID}/grpc-gateway:${SHORT_SHA}
         - gcr.io/${PROJECT_ID}/grpc-server:${SHORT_SHA}
 
