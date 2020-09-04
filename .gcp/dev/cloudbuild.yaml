@@ -62,24 +62,24 @@ steps:
   # This step generates the new manifest
   - name: 'gcr.io/cloud-builders/gcloud'
     id: Generate manifest
+    dir: go-grpc-health-probe-sample-manifests
     entrypoint: /bin/sh
     args:
       - '-c'
       - |
         set -x && \
-        cd go-grpc-health-probe-sample-manifests && \
         sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" kubernetes.yaml.tpl | \
         sed "s/COMMIT_SHA/${SHORT_SHA}/g" > kubernetes.yaml
 
   # This step pushes the manifest back to repository
   - name: 'gcr.io/cloud-builders/gcloud'
     id: Push manifest
+    dir: go-grpc-health-probe-sample-manifests
     entrypoint: /bin/sh
     args:
       - '-c'
       - |
         set -x && \
-        cd go-grpc-health-probe-sample-manifests && \
         git fetch origin candidate-dev && git switch candidate-dev && \
         git add kubernetes.yaml && \
         git commit -m "Deploying images
@@ -89,6 +89,9 @@ steps:
         Built from commit ${COMMIT_SHA} of repository go-grpc-health-probe-sample-manifest
         Author: $(git log --format='%an <%ae>' -n 1 HEAD)" && \
         git push origin candidate-dev
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
 
 #このファイルで、
 #- manifestsリポジトリをクローン
