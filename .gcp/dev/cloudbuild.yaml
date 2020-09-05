@@ -8,7 +8,7 @@ steps:
   - id: build and push grpc-gateway image
     name: gcr.io/kaniko-project/executor:latest
     args:
-      - --destination=gcr.io/$PROJECT_ID/grpc-gateway:${COMMIT_SHA}
+      - --destination=gcr.io/$PROJECT_ID/grpc-gateway:${SHORT_SHA}
       - --cache=true
       - --cache-ttl=6h
       - --dockerfile=Dockerfile.proxy
@@ -18,7 +18,7 @@ steps:
   - id: build and push grpc-server image
     name: gcr.io/kaniko-project/executor:latest
     args:
-      - --destination=gcr.io/$PROJECT_ID/grpc-server:${COMMIT_SHA}
+      - --destination=gcr.io/$PROJECT_ID/grpc-server:${SHORT_SHA}
       - --cache=true
       - --cache-ttl=6h
       - --dockerfile=Dockerfile.server
