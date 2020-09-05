@@ -3,10 +3,7 @@ steps:
   - id: go test
     name: golang:1.15.1
     dir: .
-    args:
-      - '-c'
-      - |
-        make test
+    args: ['make', 'test']
 
   - id: build and push grpc-gateway image
     name: gcr.io/kaniko-project/executor:latest
