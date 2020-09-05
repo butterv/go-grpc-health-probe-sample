@@ -1,9 +1,12 @@
 timeout: 780s
 steps:
-  - id: make test
+  - id: go test
     name: golang:1.15.1
     dir: .
-    args: [ 'make', 'test' ]
+    args:
+      - '-c'
+      - |
+        make test
 
   - id: build and push grpc-gateway image
     name: gcr.io/kaniko-project/executor:latest
@@ -25,16 +28,19 @@ steps:
       - --build-arg=PROJECT_ID=${PROJECT_ID}
     waitFor: ['make test']
 
-  # Access the id_github file from Secret Manager`
-  - name: gcr.io/cloud-builders/gcloud
+  - id: access the id_github file from secret manager
+    name: gcr.io/cloud-builders/gcloud
     entrypoint: 'bash'
-    args: [ '-c', 'gcloud secrets versions access latest --secret=id_github > /root/.ssh/id_github' ]
+    args:
+      - '-c'
+      - |
+        gcloud secrets versions access latest --secret=id_github > /root/.ssh/id_github
     volumes:
       - name: 'ssh'
         path: /root/.ssh
 
-  # Set up git with key and domain
-  - name: 'gcr.io/cloud-builders/git'
+  - id: set up git with key and domain
+    name: 'gcr.io/cloud-builders/git'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -49,41 +55,52 @@ steps:
       - name: 'ssh'
         path: /root/.ssh
 
-  # Connect to the repository
-  - name: 'gcr.io/cloud-builders/git'
+  - id: connect to the repository
+    name: 'gcr.io/cloud-builders/git'
     args:
       - clone
       - --recurse-submodules
-      - git@github.com:istsh/go-grpc-health-probe-sample-manifests.git
+      - git@github.com:istsh/${_MANIFEST_REPOSITORY_NAME}.git
     volumes:
       - name: 'ssh'
         path: /root/.ssh
 
-  # This step generates the new manifest
-  - name: 'gcr.io/cloud-builders/gcloud'
-    id: Generate manifest
-    dir: go-grpc-health-probe-sample-manifests
+  - id: generate manifest for grpc-gateway
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}/${_MANIFEST_DIR_FOR_GRPC_GATEWAY}
     entrypoint: /bin/sh
     args:
       - '-c'
       - |
         set -x && \
-        sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" kubernetes.yaml.tpl | \
-        sed "s/COMMIT_SHA/${SHORT_SHA}/g" > kubernetes.yaml
+        sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" ${_TEMPLATE_FILE} | \
+        sed "s/COMMIT_SHA/${SHORT_SHA}/g" > ${_GENERATE_FILE}
+    waitFor: ['connect to the repository']
 
-  # This step pushes the manifest back to repository
-  - name: 'gcr.io/cloud-builders/gcloud'
-    id: Push manifest
-    dir: go-grpc-health-probe-sample-manifests
+  - id: generate manifest for grpc-server
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}/${_MANIFEST_DIR_FOR_GRPC_SERVER}
+    entrypoint: /bin/sh
+    args:
+      - '-c'
+      - |
+        set -x && \
+        sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" ${_TEMPLATE_FILE} | \
+        sed "s/COMMIT_SHA/${SHORT_SHA}/g" > ${_GENERATE_FILE}
+    waitFor: ['connect to the repository']
+
+  - id: push generated manifests to ${_TARGET_BRANCH} branch
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}
     entrypoint: /bin/sh
     args:
       - '-c'
       - |
         set -x && \
         git config --global user.email $(git log --format='%an <%ae>' -n 1 HEAD | sed 's/.*\<\([^>]*\)\>.*/\1/g') && \
-        git fetch origin candidate-dev && git switch candidate-dev && \
-        git fetch origin master && git merge origin/master && \
-        git add kubernetes.yaml && \
+        git fetch origin ${_TARGET_BRANCH} && git switch ${_TARGET_BRANCH} && \
+        git fetch origin ${_DEFAULT_BRANCH} && git merge origin/${_DEFAULT_BRANCH} && \
+        git add ${_MANIFEST_DIR_FOR_GRPC_GATEWAY}/${_GENERATE_FILE} ${_MANIFEST_DIR_FOR_GRPC_SERVER}/${_GENERATE_FILE} && \
         git commit \
         --author="Cloud Build Service Account <$(gcloud auth list --filter=status:ACTIVE --format='value(account)')>" \
         -m "Deploying images
@@ -92,14 +109,16 @@ steps:
 
         Built from commit ${COMMIT_SHA} of repository go-grpc-health-probe-sample-manifest
         Author: $(git log --format='%an <%ae>' -n 1 HEAD)" && \
-        git push origin candidate-dev
+        git push origin ${_TARGET_BRANCH}
     volumes:
       - name: 'ssh'
         path: /root/.ssh
 
-#このファイルで、
-#- manifestsリポジトリをクローン
-#- grpc-gatewayとgrpc-serverのdeployment.yamlのCOMMIT_SHAを更新
-#- candidateブランチにプッシュする
-#ステップを書く
-#manifestsリポジトリのcandidateブランチにプッシュされると、デプロイが開始される
+substitutions:
+  _MANIFEST_REPOSITORY_NAME: go-grpc-health-probe-sample-manifests
+  _MANIFEST_DIR_FOR_GRPC_GATEWAY: k8s/base/grpc-gateway
+  _MANIFEST_DIR_FOR_GRPC_SERVER: k8s/base/grpc-server
+  _TEMPLATE_FILE: rollout.yaml.tpl
+  _GENERATE_FILE: rollout.yaml
+  _DEFAULT_BRANCH: master
+  _TARGET_BRANCH: candidate-dev
