@@ -64,6 +64,7 @@ steps:
 
   - id: switch to ${_TARGET_BRANCH} branch
     name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}
     entrypoint: /bin/sh
     args:
       - '-c'
