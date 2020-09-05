@@ -16,7 +16,7 @@ steps:
       - --cache-ttl=6h
       - --dockerfile=Dockerfile.proxy
       - --build-arg=PROJECT_ID=${PROJECT_ID}
-    waitFor: ['make test']
+    waitFor: ['go test']
 
   - id: build and push grpc-server image
     name: gcr.io/kaniko-project/executor:latest
@@ -26,7 +26,7 @@ steps:
       - --cache-ttl=6h
       - --dockerfile=Dockerfile.server
       - --build-arg=PROJECT_ID=${PROJECT_ID}
-    waitFor: ['make test']
+    waitFor: ['go test']
 
   - id: access the id_github file from secret manager
     name: gcr.io/cloud-builders/gcloud
