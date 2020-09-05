@@ -53,11 +53,15 @@ steps:
         path: /root/.ssh
 
   - id: connect to the repository
-    name: 'gcr.io/cloud-builders/git'
+    name: 'gcr.io/cloud-builders/gcloud'
     args:
-      - clone
-      - --recurse-submodules
-      - git@github.com:istsh/${_MANIFEST_REPOSITORY_NAME}.git
+      - '-c'
+      - |
+        set -x && \
+        git clone --recurse-submodules git@github.com:istsh/${_MANIFEST_REPOSITORY_NAME}.git && \
+        git config --global user.email $(git log --format='%an <%ae>' -n 1 HEAD | sed 's/.*\<\([^>]*\)\>.*/\1/g') && \
+        git fetch origin ${_TARGET_BRANCH} && git switch ${_TARGET_BRANCH} && \
+        git fetch origin ${_DEFAULT_BRANCH} && git merge origin/${_DEFAULT_BRANCH}
     volumes:
       - name: 'ssh'
         path: /root/.ssh
@@ -94,9 +98,6 @@ steps:
       - '-c'
       - |
         set -x && \
-        git config --global user.email $(git log --format='%an <%ae>' -n 1 HEAD | sed 's/.*\<\([^>]*\)\>.*/\1/g') && \
-        git fetch origin ${_TARGET_BRANCH} && git switch ${_TARGET_BRANCH} && \
-        git fetch origin ${_DEFAULT_BRANCH} && git merge origin/${_DEFAULT_BRANCH} && \
         git add ${_MANIFEST_DIR_FOR_GRPC_GATEWAY}/${_GENERATE_FILE} ${_MANIFEST_DIR_FOR_GRPC_SERVER}/${_GENERATE_FILE} && \
         git commit \
         --author="Cloud Build Service Account <$(gcloud auth list --filter=status:ACTIVE --format='value(account)')>" \
