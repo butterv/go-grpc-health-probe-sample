@@ -54,6 +54,7 @@ steps:
 
   - id: connect to the repository
     name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: /bin/sh
     args:
       - '-c'
       - |
