@@ -1,0 +1,133 @@
+timeout: 780s
+steps:
+  - id: go test
+    name: golang:1.15.1
+    dir: .
+    args: ['make', 'test']
+
+  - id: build and push grpc-gateway image
+    name: gcr.io/kaniko-project/executor:latest
+    args:
+      - --destination=gcr.io/$PROJECT_ID/grpc-gateway:${SHORT_SHA}
+      - --cache=true
+      - --cache-ttl=6h
+      - --dockerfile=Dockerfile.proxy
+      - --build-arg=PROJECT_ID=${PROJECT_ID}
+    waitFor: ['go test']
+
+  - id: build and push grpc-server image
+    name: gcr.io/kaniko-project/executor:latest
+    args:
+      - --destination=gcr.io/$PROJECT_ID/grpc-server:${SHORT_SHA}
+      - --cache=true
+      - --cache-ttl=6h
+      - --dockerfile=Dockerfile.server
+      - --build-arg=PROJECT_ID=${PROJECT_ID}
+    waitFor: ['go test']
+
+  - id: access the id_github file from secret manager
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud secrets versions access latest --secret=id_github > /root/.ssh/id_github
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+  - id: set up git with key and domain
+    name: 'gcr.io/cloud-builders/git'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        chmod 600 /root/.ssh/id_github
+        cat <<EOF >/root/.ssh/config
+        Hostname github.com
+        IdentityFile /root/.ssh/id_github
+        EOF
+        ssh-keyscan -t rsa github.com > /root/.ssh/known_hosts
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+  - id: connect to the repository
+    name: 'gcr.io/cloud-builders/git'
+    args:
+      - clone
+      - --recurse-submodules
+      - git@github.com:istsh/${_MANIFEST_REPOSITORY_NAME}.git
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+  - id: switch to ${_TARGET_BRANCH} branch
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}
+    entrypoint: /bin/sh
+    args:
+      - '-c'
+      - |
+        set -x && \
+        git config --global user.email $(git log --format='%an <%ae>' -n 1 HEAD | sed 's/.*\<\([^>]*\)\>.*/\1/g') && \
+        git fetch origin ${_TARGET_BRANCH} && git switch ${_TARGET_BRANCH} && \
+        git fetch origin ${_DEFAULT_BRANCH} && git merge origin/${_DEFAULT_BRANCH}
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+  - id: generate manifest for grpc-gateway
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}/${_MANIFEST_DIR_FOR_GRPC_GATEWAY}
+    entrypoint: /bin/sh
+    args:
+      - '-c'
+      - |
+        set -x && \
+        sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" ${_TEMPLATE_FILE} | \
+        sed "s/COMMIT_SHA/${SHORT_SHA}/g" > ${_GENERATE_FILE}
+
+  - id: generate manifest for grpc-server
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}/${_MANIFEST_DIR_FOR_GRPC_SERVER}
+    entrypoint: /bin/sh
+    args:
+      - '-c'
+      - |
+        set -x && \
+        sed "s/GOOGLE_CLOUD_PROJECT/${PROJECT_ID}/g" ${_TEMPLATE_FILE} | \
+        sed "s/COMMIT_SHA/${SHORT_SHA}/g" > ${_GENERATE_FILE}
+
+  - id: push generated manifests to ${_TARGET_BRANCH} branch
+    name: 'gcr.io/cloud-builders/gcloud'
+    dir: ${_MANIFEST_REPOSITORY_NAME}
+    entrypoint: /bin/sh
+    args:
+      - '-c'
+      - |
+        set -x && \
+        git add ${_MANIFEST_DIR_FOR_GRPC_GATEWAY}/${_GENERATE_FILE} ${_MANIFEST_DIR_FOR_GRPC_SERVER}/${_GENERATE_FILE} && \
+        git commit \
+        --author="Cloud Build Service Account <$(gcloud auth list --filter=status:ACTIVE --format='value(account)')>" \
+        -m "Deploying images
+        - gcr.io/${PROJECT_ID}/grpc-gateway:${SHORT_SHA}
+        - gcr.io/${PROJECT_ID}/grpc-server:${SHORT_SHA}
+
+        Built from commit ${COMMIT_SHA} of repository go-grpc-health-probe-sample-manifest
+        Author: $(git log --format='%an <%ae>' -n 1 HEAD)" && \
+        git push origin ${_TARGET_BRANCH}
+    volumes:
+      - name: 'ssh'
+        path: /root/.ssh
+
+substitutions:
+  _MANIFEST_REPOSITORY_NAME: go-grpc-health-probe-sample-manifests
+  _MANIFEST_DIR_FOR_GRPC_GATEWAY: k8s/base/grpc-gateway
+  _MANIFEST_DIR_FOR_GRPC_SERVER: k8s/base/grpc-server
+#  _TEMPLATE_FILE: rollout.yaml.tpl
+#  _GENERATE_FILE: rollout.yaml
+  _TEMPLATE_FILE: deployment.yaml.tpl
+  _GENERATE_FILE: deployment.yaml
+  _DEFAULT_BRANCH: master
+  _TARGET_BRANCH: candidate-dev
