@@ -125,7 +125,9 @@ substitutions:
   _MANIFEST_REPOSITORY_NAME: go-grpc-health-probe-sample-manifests
   _MANIFEST_DIR_FOR_GRPC_GATEWAY: k8s/base/grpc-gateway
   _MANIFEST_DIR_FOR_GRPC_SERVER: k8s/base/grpc-server
-  _TEMPLATE_FILE: rollout.yaml.tpl
-  _GENERATE_FILE: rollout.yaml
+#  _TEMPLATE_FILE: rollout.yaml.tpl
+#  _GENERATE_FILE: rollout.yaml
+  _TEMPLATE_FILE: deployment.yaml.tpl
+  _GENERATE_FILE: deployment.yaml
   _DEFAULT_BRANCH: master
   _TARGET_BRANCH: candidate-dev
